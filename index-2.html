@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>FunNav 🧭</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#030712;color:#fff}
+body{display:flex;flex-direction:column}
+
+/* Header */
+#header{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#header h1{font-size:19px;font-weight:900;color:#fff;letter-spacing:-0.5px}
+#header p{font-size:10px;color:rgba(255,255,255,0.75)}
+#voice-btn{background:rgba(255,255,255,0.2);border:none;border-radius:99px;padding:6px 13px;font-size:12px;font-weight:700;color:#fff;cursor:pointer}
+
+/* Voice panel */
+#vpanel{background:#0f172a;border-bottom:1px solid #1f2937;padding:12px;display:none;flex-shrink:0}
+#vpanel.open{display:block}
+.ptitle{font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.mcard{background:#1f2937;border:2px solid transparent;border-radius:10px;padding:9px 5px;text-align:center;cursor:pointer}
+.mcard.active{border-color:#fff;background:rgba(255,255,255,.1)}
+.mcard span{display:block;font-size:9px;color:#fff;font-weight:700;margin-top:3px}
+.mcard small{display:block;font-size:8px;color:#6b7280;margin-top:1px}
+.lrow{display:flex;gap:6px}
+.lbtn{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid transparent;background:#1f2937;color:#9ca3af}
+.lbtn.active{border-color:#fff;color:#fff;background:rgba(255,255,255,.08)}
+
+/* Search */
+#sbar{display:flex;gap:6px;padding:8px 10px;background:#111827;flex-shrink:0;align-items:center}
+#swrap{position:relative;flex:1}
+#sinput{width:100%;background:#1f2937;color:#fff;padding:10px 10px 10px 32px;border-radius:10px;border:1px solid #374151;font-size:14px;outline:none}
+#sinput::placeholder{color:#6b7280}
+#sicon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#6b7280;pointer-events:none}
+#aclist{position:absolute;left:0;right:0;top:100%;margin-top:3px;background:#1f2937;border-radius:10px;border:1px solid #374151;z-index:9999;overflow:hidden;max-height:220px;overflow-y:auto;display:none}
+.acitem{padding:10px 12px;cursor:pointer;font-size:13px;color:#e5e7eb;border-bottom:1px solid #2d3748;display:flex;align-items:center;gap:8px}
+.acitem:hover{background:#2d3748}
+#locbtn{background:#1f2937;border:1px solid #374151;padding:10px 11px;border-radius:10px;cursor:pointer;font-size:16px;flex-shrink:0}
+#gobtn{border:none;padding:10px 16px;border-radius:10px;font-weight:900;color:#fff;font-size:14px;cursor:pointer;flex-shrink:0;min-width:60px}
+
+/* Map toggles */
+#mtogs{display:flex;gap:5px;padding:6px 10px;background:#111827;flex-shrink:0;align-items:center}
+.mtog{border:1.5px solid #374151;background:#1f2937;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer}
+.mtog.on{border-color:#3b82f6;background:rgba(59,130,246,.2);color:#93c5fd}
+#ltog{margin-left:auto;border:1.5px solid #374151;background:#1f2937;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer}
+
+/* Map */
+#mapwrap{position:relative;flex:1;min-height:0}
+#map{width:100%;height:100%}
+
+/* Map overlays */
+#etachip{position:absolute;top:10px;left:10px;background:rgba(10,15,25,.92);border-radius:10px;padding:7px 12px;border:1px solid #374151;display:none;z-index:10;min-width:80px}
+#etachip .el{font-size:9px;color:#9ca3af;text-transform:uppercase;font-weight:700}
+#etachip .ev{font-size:16px;font-weight:900;color:#fff;line-height:1.1}
+#speakbtn{position:absolute;top:10px;right:10px;background:rgba(10,15,25,.92);border:1px solid #374151;border-radius:10px;padding:8px 10px;font-size:18px;cursor:pointer;z-index:10;display:none;color:#fff}
+#recenter{position:absolute;bottom:8px;right:10px;background:rgba(10,15,25,.92);border:1px solid #374151;border-radius:10px;padding:8px 10px;font-size:18px;cursor:pointer;z-index:10;display:none;color:#fff}
+#arrivebox{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);z-index:20;backdrop-filter:blur(6px)}
+#arrivebox.show{display:flex}
+#arrivein{text-align:center;animation:pop .4s ease}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+#arrivein .abig{font-size:60px}
+#arrivein .atxt{font-size:22px;font-weight:900;color:#fff;margin-top:8px}
+
+/* Bottom panel */
+#bottom{background:#111827;border-top:1px solid #1f2937;flex-shrink:0;max-height:44vh;overflow-y:auto}
+
+/* Nav panel */
+#navpanel{padding:12px;display:none}
+#navpanel.open{display:block}
+#etarow{display:flex;gap:14px;margin-bottom:10px}
+.eb .el{font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase}
+.eb .ev{font-size:14px;font-weight:900;color:#fff}
+#steprow{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+#stepico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+#steproad{font-size:13px;font-weight:700;color:#fff;margin-top:2px;line-height:1.3}
+#stepdist{font-size:11px;color:#60a5fa;font-weight:600;margin-top:4px}
+#steplbl{font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+#stepctr{text-align:right;flex-shrink:0}
+#stepctr .sl{font-size:9px;color:#6b7280}
+#stepctr .sn{font-size:17px;font-weight:900;color:#fff;line-height:1}
+#progrow{display:flex;gap:3px;margin-bottom:10px}
+.ps{height:6px;flex:1;border-radius:99px;background:#1f2937;transition:background .3s}
+.ps.done{background:#3b82f6}
+#btnrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#nextbtn{border:none;padding:13px;border-radius:12px;font-weight:900;color:#fff;font-size:14px;cursor:pointer}
+#missbtn{background:#1f2937;border:1px solid #374151;padding:13px;border-radius:12px;font-weight:700;color:#d1d5db;font-size:13px;cursor:pointer}
+
+/* POI panel */
+#poipanel{padding:12px;border-top:1px solid #1f2937;display:none}
+#poipanel.open{display:block}
+.poihdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.poihdr h3{font-size:12px;font-weight:900;color:#fff}
+.poihdr span{font-size:10px;color:#6b7280;background:#1f2937;padding:2px 7px;border-radius:99px}
+.poiitem{display:flex;align-items:center;gap:9px;background:#1f2937;border-radius:11px;padding:10px;border:1px solid #374151;margin-bottom:7px}
+.poiico{font-size:22px;flex-shrink:0}
+.poiinfo{flex:1;min-width:0}
+.poinr{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.poiname{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poibadge{font-size:9px;padding:2px 5px;border-radius:99px;font-weight:700;flex-shrink:0}
+.free{background:#14532d;color:#86efac}
+.paid{background:#374151;color:#9ca3af}
+.poidesc{font-size:10px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.poimeta{display:flex;gap:7px;margin-top:3px}
+.poirat{font-size:10px;color:#facc15;font-weight:700}
+.poidst{font-size:10px;color:#60a5fa;font-weight:600}
+.poibtn{flex-shrink:0;border:none;color:#fff;font-size:11px;font-weight:700;padding:7px 11px;border-radius:8px;cursor:pointer}
+
+/* No dest */
+#nodest{padding:12px}
+#nodest p{color:#4b5563;font-size:12px;margin-bottom:9px;text-align:center}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.qbtn{background:#1f2937;border:1px solid #374151;border-radius:11px;padding:10px;text-align:left;cursor:pointer;color:#fff}
+.qbtn .qi{font-size:16px;margin-bottom:3px}
+.qbtn .ql{font-size:11px;font-weight:700;line-height:1.3;color:#e5e7eb}
+
+/* Toast */
+#toast{position:fixed;bottom:14px;left:10px;right:10px;max-width:500px;margin:0 auto;z-index:9999;pointer-events:none;opacity:0;transition:opacity .35s;text-align:center}
+#toast.show{opacity:1}
+#toastin{display:inline-block;border-radius:14px;padding:11px 16px;border:1px solid rgba(255,255,255,.15);box-shadow:0 16px 40px rgba(0,0,0,.6)}
+#toastin p{margin:0;font-size:13px;font-weight:700;color:#fff;line-height:1.4}
+
+/* Loading */
+#loading{position:fixed;inset:0;background:#030712;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:14px}
+#loading .sp{font-size:44px;animation:spin 1s linear infinite}
+#loading p{color:#6b7280;font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="sp">🧭</div><p>Loading FunNav...</p></div>
+
+<div id="header">
+  <div>
+    <h1>🧭 FunNav</h1>
+    <p>Maps · Waze · Your Way</p>
+  </div>
+  <button id="voice-btn" onclick="toggleVP()">🎠 Kid Mode</button>
+</div>
+
+<div id="vpanel">
+  <div class="ptitle">Voice Mode</div>
+  <div class="mgrid">
+    <div class="mcard active" id="mc-fun" onclick="setMode('fun')">
+      <div style="font-size:22px">🎠</div><span>🎪 Kid Mode</span><small>Disney fun!</small>
+    </div>
+    <div class="mcard" id="mc-adult" onclick="setMode('adult')">
+      <div style="font-size:22px">😤</div><span>🤬 Unfiltered</span><small>Strong language</small>
+    </div>
+    <div class="mcard" id="mc-boring" onclick="setMode('boring')">
+      <div style="font-size:22px">🗺️</div><span>😴 Boring</span><small>Plain directions</small>
+    </div>
+  </div>
+  <div class="ptitle">Language</div>
+  <div class="lrow">
+    <button class="lbtn active" id="lb-en" onclick="setLang('en')">🇺🇸 English</button>
+    <button class="lbtn" id="lb-es" onclick="setLang('es')">🇪🇸 Español</button>
+  </div>
+</div>
+
+<div id="sbar">
+  <div id="swrap">
+    <span id="sicon">🔍</span>
+    <input id="sinput" type="text" placeholder="Where to?" autocomplete="off"
+      onkeydown="if(event.key==='Enter'){hideAC();doSearch()}"/>
+    <div id="aclist"></div>
+  </div>
+  <button id="locbtn" onclick="goMyLoc()" title="My location">📍</button>
+  <button id="gobtn" onclick="doSearch()">Go</button>
+</div>
+
+<div id="mtogs">
+  <button class="mtog on" id="tog-roadmap" onclick="setMT('roadmap')">🗺️ Map</button>
+  <button class="mtog" id="tog-satellite" onclick="setMT('satellite')">🛰️ Sat</button>
+  <button class="mtog" id="tog-traffic" onclick="togTraffic()">🚦 Traffic</button>
+  <button id="ltog" onclick="cycleLang()">🇺🇸 EN</button>
+</div>
+
+<div id="mapwrap">
+  <div id="map"></div>
+  <div id="etachip"><div class="el">ETA</div><div class="ev" id="etav">--</div></div>
+  <button id="speakbtn" onclick="repeatDir()" title="Repeat">🔊</button>
+  <button id="recenter" onclick="recenterMap()" title="Re-center">🎯</button>
+  <div id="arrivebox">
+    <div id="arrivein">
+      <div class="abig">🎉</div>
+      <div class="atxt" id="arrivetxt">You Arrived!</div>
+    </div>
+  </div>
+</div>
+
+<div id="bottom">
+  <div id="navpanel">
+    <div id="etarow">
+      <div class="eb"><div class="el">ETA</div><div class="ev" id="eta2">--</div></div>
+      <div class="eb"><div class="el">Distance</div><div class="ev" id="distv">--</div></div>
+      <div class="eb"><div class="el">Step</div><div class="ev" id="stepcntv">--</div></div>
+    </div>
+    <div id="steprow">
+      <div id="stepico">⬆️</div>
+      <div style="flex:1;min-width:0">
+        <div id="steplbl">Next Maneuver</div>
+        <div id="steproad">Getting route...</div>
+        <div id="stepdist"></div>
+      </div>
+      <div id="stepctr"><div class="sl">Step</div><div class="sn" id="stepnum">--</div></div>
+    </div>
+    <div id="progrow"></div>
+    <div id="btnrow">
+      <button id="nextbtn" onclick="nextStep()">✅ Next Step</button>
+      <button id="missbtn" onclick="missedTurn()">🔄 Missed Turn</button>
+    </div>
+  </div>
+
+  <div id="poipanel">
+    <div class="poihdr"><h3>✨ Along Your Route</h3><span id="poicnt">0 spots</span></div>
+    <div id="poilist"></div>
+  </div>
+
+  <div id="nodest">
+    <p>Search a destination or tap one below</p>
+    <div class="qgrid">
+      <button class="qbtn" onclick="quickNav('Central Park, New York, NY')"><div class="qi">🌳</div><div class="ql">Central Park, NY</div></button>
+      <button class="qbtn" onclick="quickNav('Times Square, New York, NY')"><div class="qi">🗽</div><div class="ql">Times Square, NYC</div></button>
+      <button class="qbtn" onclick="quickNav('Golden Gate Bridge, San Francisco, CA')"><div class="qi">🌉</div><div class="ql">Golden Gate Bridge</div></button>
+      <button class="qbtn" onclick="quickNav('Walt Disney World Resort, Orlando, FL')"><div class="qi">🏰</div><div class="ql">Disney World, FL</div></button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><div id="toastin"><p id="toastmsg"></p></div></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// PHRASES
+// ═══════════════════════════════════════════════════════
+const PH = {
+  fun:{
+    en:{
+      start:["Adventure awaits! Let's go!","To infinity and beyond, navigation starting!","Buckle up! Simba says let's ride!"],
+      right:["Turn right partner, yeehaw!","Turn right like Simba chasing his destiny!","Turn right! Mickey would be proud!","Swish and flick to the right!"],
+      left:["Hang a left! Buzz Lightyear says so!","Turn left, like Elsa waving her magic hand!","Bear left! Great adventure ahead!","Just keep swimming, to the left!"],
+      straight:["Straight ahead brave explorer!","Onward! Like Woody says, there's a snake in my boot!","Straight ahead champ, you've got this!"],
+      uturn:["Make a U-turn! Even heroes backtrack sometimes!","Time for a U-turn! Nemo found his way back too!"],
+      arrived:["You made it! That was worthy of a Disney movie!","Hooray! Hakuna Matata, no more worries!","To infinity and beyond, and you made it!"],
+      missed:["Uh oh, missed it! That's okay, rerouting the adventure!","Oopsie! Even Buzz Lightyear takes detours, rerouting!"],
+      poi:["Psst! Something amazing is nearby!","Ooooh! A magical stop is close by!"],
+    },
+    es:{
+      start:["La aventura te espera, vamos!","Al infinito y mas alla, navegacion iniciada!"],
+      right:["Gira a la derecha como Simba!","A la derecha, Buzz Lightyear dice que si!","Dobla a la derecha, campeon!"],
+      left:["Gira a la izquierda como Elsa!","A la izquierda, sigue nadando!","Izquierda, valiente, Hakuna Matata!"],
+      straight:["Sigue recto aventurero!","Adelante, hay una serpiente en mi bota!"],
+      uturn:["Da la vuelta, hasta los heroes retroceden!"],
+      arrived:["Llegaste, una aventura digna de Disney!","Hakuna Matata, ya llegaste!"],
+      missed:["Ay ay ay, recalculando la aventura!","Hasta Buzz se equivoca, recalculando!"],
+      poi:["Hay algo increible cerca!"],
+    }
+  },
+  adult:{
+    en:{
+      start:["Alright, let's get this over with.","Fine. Try not to screw it up."],
+      right:["Turn the hell right! Did you miss the sign?","Right! Not that complicated, genius!","Turn right! Pay attention!","Hey jackass, right turn, eyes on the road!"],
+      left:["Left! Turn left! What are you doing?","It's a left turn Einstein, not rocket science!","Left, damn it! I clearly said left!","Holy smokes, left turn, wake up!"],
+      straight:["Just go straight. Can you handle that?","Straight ahead. And no, we're not stopping for snacks.","Keep it straight. I'm watching you."],
+      uturn:["Make a U-turn genius, you went the wrong way.","U-turn. Now. Don't argue with me."],
+      arrived:["Finally. You made it. Only took forever.","You arrived. Took longer than it should have, but hey.","Destination reached. Go congratulate yourself, champ."],
+      missed:["Are you serious?! You missed the turn again! Rerouting!","You blew right past it! Recalculating, genius.","Oh that's just great. Missed the damn turn. Rerouting!"],
+      poi:["Hey, there's something nearby that doesn't totally suck.","Stop ahead rated pretty well. Don't screw up the detour."],
+    },
+    es:{
+      start:["Bien. Empezando. Trata de no arruinarlo.","Vamos. Yo te llevo. Sin jaladas."],
+      right:["Que demonios, gira a la derecha ya!","A la derecha caramba, es que no ves las senales?","Derecha! En que mundo estas viviendo?"],
+      left:["Izquierda!! Que parte de izquierda no entiendes?","A la izquierda por Dios, abre los ojos!","Izquierda maldicion!"],
+      straight:["Sigue recto. Puedes con eso? No lo arruines.","Recto. Te estoy vigilando."],
+      uturn:["Da la vuelta. Ahora. Sin discutir."],
+      arrived:["Por fin! Llegaste. Solo tardaste una eternidad.","Destino alcanzado. Tomaté un momento para aplaudirte."],
+      missed:["En serio?! Te pasaste! Recalculando!","Madre mia! Te pasaste! Recalculando campeon!"],
+      poi:["Hay algo cerca que no esta mal del todo."],
+    }
+  },
+  boring:{
+    en:{
+      start:["Starting navigation.","Route found. Beginning guidance."],
+      right:["Turn right.","In 500 feet, turn right.","Turn right at the intersection."],
+      left:["Turn left.","In 500 feet, turn left.","Turn left at the next street."],
+      straight:["Continue straight.","Proceed straight.","Stay on the current route."],
+      uturn:["Make a legal U-turn.","U-turn when safe."],
+      arrived:["You have arrived at your destination.","Destination reached."],
+      missed:["Recalculating route.","Make a U-turn when possible."],
+      poi:["Point of interest nearby."],
+    },
+    es:{
+      start:["Iniciando navegacion.","Ruta encontrada."],
+      right:["Gire a la derecha.","En 500 pies, gire a la derecha."],
+      left:["Gire a la izquierda.","En 500 pies, gire a la izquierda."],
+      straight:["Continue recto.","Siga en la ruta actual."],
+      uturn:["De la vuelta cuando sea posible."],
+      arrived:["Ha llegado a su destino.","Destino alcanzado."],
+      missed:["Recalculando ruta."],
+      poi:["Punto de interes cercano."],
+    }
+  }
+};
+
+const MODES = {
+  fun:   {g:'linear-gradient(135deg,#fb923c,#f59e0b)', label:'🎠 Kid Mode'},
+  adult: {g:'linear-gradient(135deg,#ef4444,#dc2626)', label:'😤 Unfiltered'},
+  boring:{g:'linear-gradient(135deg,#6b7280,#4b5563)', label:'🗺️ Boring'}
+};
+
+const MV = {
+  'turn-right':'right','turn-sharp-right':'right','keep-right':'right','ramp-right':'right','fork-right':'right',
+  'turn-left':'left','turn-sharp-left':'left','keep-left':'left','ramp-left':'left','fork-left':'left',
+  'uturn-left':'uturn','uturn-right':'uturn',
+  'straight':'straight','merge':'straight','ferry':'straight',
+  'roundabout-left':'left','roundabout-right':'right'
+};
+
+const SI = {right:'↗️',left:'↖️',straight:'⬆️',uturn:'↩️'};
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let map, dSvc, dRend, pSvc, acSvc, tLayer;
+let mode='fun', lang='en';
+let steps=[], curStep=0, navigating=false, trafficOn=false;
+let userLoc=null, destStr=null;
+let carMark=null, watchId=null;
+let toastT=null;
+let voicesLoaded=false;
+let lastSpoken='';
+
+// ═══════════════════════════════════════════════════════
+// SPEECH — the key fix: unlock on first tap
+// ═══════════════════════════════════════════════════════
+let speechUnlocked = false;
+
+function unlockSpeech() {
+  if (speechUnlocked) return;
+  if (!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance('');
+  u.volume = 0;
+  window.speechSynthesis.speak(u);
+  speechUnlocked = true;
+}
+
+// Call unlock on any user interaction
+document.addEventListener('touchstart', unlockSpeech, {once:true});
+document.addEventListener('click', unlockSpeech, {once:true});
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  if (!text) return;
+  lastSpoken = text;
+  window.speechSynthesis.cancel();
+
+  // Small delay to let cancel settle on mobile
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === 'es' ? 'es-US' : 'en-US';
+    u.volume = 1.0;
+    u.rate = mode === 'fun' ? 1.05 : mode === 'adult' ? 0.95 : 1.0;
+    u.pitch = mode === 'fun' ? 1.25 : mode === 'adult' ? 0.8 : 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length) {
+      let v = null;
+      if (lang === 'es') {
+        v = voices.find(x => x.lang.startsWith('es')) || null;
+      } else {
+        if (mode === 'fun') {
+          v = voices.find(x => /samantha|karen|moira|zoe|tessa/i.test(x.name)) ||
+              voices.find(x => x.lang === 'en-US' && x.localService) ||
+              voices.find(x => x.lang === 'en-US') || null;
+        } else if (mode === 'adult') {
+          v = voices.find(x => /daniel|alex|fred|tom|bruce/i.test(x.name)) ||
+              voices.find(x => x.lang === 'en-US' && x.localService) ||
+              voices.find(x => x.lang === 'en-US') || null;
+        } else {
+          v = voices.find(x => x.lang === 'en-US') || null;
+        }
+      }
+      if (v) u.voice = v;
+    }
+
+    window.speechSynthesis.speak(u);
+  }, 100);
+}
+
+function repeatDir() {
+  if (lastSpoken) speak(lastSpoken);
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+function ph(type) {
+  return pick(PH[mode]?.[lang]?.[type] || PH[mode]?.en?.[type] || ['Continue.']);
+}
+
+function mvType(m) {
+  if (!m) return 'straight';
+  return MV[m] || 'straight';
+}
+
+function stripHTML(h) {
+  const d = document.createElement('div');
+  d.innerHTML = h;
+  return d.textContent || d.innerText || '';
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function toast(msg, dur=5000) {
+  document.getElementById('toastmsg').textContent = msg;
+  document.getElementById('toast').classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => document.getElementById('toast').classList.remove('show'), dur);
+}
+
+// ═══════════════════════════════════════════════════════
+// STYLING
+// ═══════════════════════════════════════════════════════
+function applyStyle() {
+  const g = MODES[mode].g;
+  ['header','gobtn','nextbtn','toastin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.background = g;
+  });
+  document.getElementById('stepico').style.background = g;
+  document.querySelectorAll('.poibtn').forEach(b => b.style.background = g);
+  document.querySelectorAll('.ps.done').forEach(s => s.style.background = '#3b82f6');
+}
+
+// ═══════════════════════════════════════════════════════
+// MODE / LANG
+// ═══════════════════════════════════════════════════════
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mcard').forEach(c => c.classList.remove('active'));
+  document.getElementById('mc-'+m).classList.add('active');
+  document.getElementById('voice-btn').textContent = MODES[m].label;
+  applyStyle();
+  document.getElementById('vpanel').classList.remove('open');
+}
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('lb-'+l).classList.add('active');
+  document.getElementById('ltog').textContent = l==='en'?'🇺🇸 EN':'🇪🇸 ES';
+}
+
+function cycleLang() { setLang(lang==='en'?'es':'en'); }
+function toggleVP() { document.getElementById('vpanel').classList.toggle('open'); }
+
+// ═══════════════════════════════════════════════════════
+// MAP CONTROLS
+// ═══════════════════════════════════════════════════════
+function setMT(t) {
+  if (!map) return;
+  map.setMapTypeId(t);
+  document.querySelectorAll('.mtog').forEach(b => b.classList.remove('on'));
+  const el = document.getElementById('tog-'+t);
+  if (el) el.classList.add('on');
+}
+
+function togTraffic() {
+  if (!tLayer) return;
+  trafficOn = !trafficOn;
+  tLayer.setMap(trafficOn ? map : null);
+  document.getElementById('tog-traffic').classList.toggle('on', trafficOn);
+}
+
+function recenterMap() {
+  if (!map || !carMark) return;
+  map.panTo(carMark.getPosition());
+  map.setZoom(17);
+}
+
+// ═══════════════════════════════════════════════════════
+// LOCATION
+// ═══════════════════════════════════════════════════════
+function goMyLoc() {
+  if (!navigator.geolocation) { toast('⚠️ Geolocation not supported.'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    userLoc = {lat:pos.coords.latitude, lng:pos.coords.longitude};
+    if (map) { map.panTo(userLoc); map.setZoom(15); }
+    toast('📍 Location found! Now search your destination.');
+  }, () => toast('⚠️ Location access denied. Please allow it in browser settings.'));
+}
+
+function startGPSTracking() {
+  if (!navigator.geolocation) return;
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  watchId = navigator.geolocation.watchPosition(pos => {
+    const loc = {lat:pos.coords.latitude, lng:pos.coords.longitude};
+    userLoc = loc;
+    updateCarPosition(loc, pos.coords.heading);
+    checkAutoAdvance(loc);
+  }, null, {enableHighAccuracy:true, maximumAge:2000, timeout:10000});
+}
+
+function stopGPSTracking() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+}
+
+// ═══════════════════════════════════════════════════════
+// CAR MARKER
+// ═══════════════════════════════════════════════════════
+function updateCarPosition(loc, heading) {
+  if (!map) return;
+  const rotation = (heading !== null && !isNaN(heading)) ? heading : 0;
+  if (carMark) {
+    carMark.setPosition(loc);
+    const icon = carMark.getIcon();
+    icon.rotation = rotation;
+    carMark.setIcon(icon);
+  } else {
+    carMark = new google.maps.Marker({
+      position: loc,
+      map,
+      zIndex: 999,
+      title: 'You',
+      icon: {
+        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+        scale: 6,
+        fillColor: '#3B82F6',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+        rotation: rotation
+      }
+    });
+  }
+  // Keep map centered on car while navigating
+  if (navigating) {
+    map.panTo(loc);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTO-ADVANCE: check if close to next waypoint
+// ═══════════════════════════════════════════════════════
+function distMeters(a, b) {
+  const R = 6371000;
+  const dLat = (b.lat-a.lat)*Math.PI/180;
+  const dLng = (b.lng-a.lng)*Math.PI/180;
+  const x = Math.sin(dLat/2)*Math.sin(dLat/2) +
+    Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*
+    Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+function checkAutoAdvance(loc) {
+  if (!navigating || !steps[curStep]) return;
+  const endLoc = steps[curStep].end_location;
+  const target = {lat: endLoc.lat(), lng: endLoc.lng()};
+  const dist = distMeters(loc, target);
+  // Auto advance when within 30 meters of step endpoint
+  if (dist < 30) {
+    if (curStep < steps.length - 1) {
+      curStep++;
+      updateStepUI();
+      announceStep(curStep);
+    } else {
+      triggerArrived();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTOCOMPLETE
+// ═══════════════════════════════════════════════════════
+function hideAC() { document.getElementById('aclist').style.display='none'; }
+
+function setupAC() {
+  const inp = document.getElementById('sinput');
+  inp.addEventListener('input', () => {
+    const v = inp.value.trim();
+    const list = document.getElementById('aclist');
+    if (!v || !acSvc) { hideAC(); return; }
+    acSvc.getPlacePredictions({input:v}, (preds, status) => {
+      list.innerHTML = '';
+      if (status !== google.maps.places.PlacesServiceStatus.OK || !preds) { hideAC(); return; }
+      preds.slice(0,5).forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'acitem';
+        item.innerHTML = '📍 ' + p.description;
+        item.onclick = () => { inp.value=p.description; hideAC(); startNav(p.description); };
+        list.appendChild(item);
+      });
+      list.style.display = 'block';
+    });
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('#swrap')) hideAC(); });
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION CORE
+// ═══════════════════════════════════════════════════════
+function doSearch() {
+  unlockSpeech(); // user tapped — unlock speech
+  const q = document.getElementById('sinput').value.trim();
+  if (!q) { toast('Enter a destination first!'); return; }
+  hideAC();
+  startNav(q);
+}
+
+function quickNav(dest) {
+  unlockSpeech();
+  document.getElementById('sinput').value = dest;
+  startNav(dest);
+}
+
+function startNav(destination) {
+  if (!map || !dSvc || !dRend) { toast('⚠️ Map still loading, try again in a moment.'); return; }
+  destStr = destination;
+
+  // Use real location if available, else NYC default
+  const origin = userLoc || {lat:40.7128, lng:-74.0060};
+
+  dSvc.route({
+    origin,
+    destination,
+    travelMode: google.maps.TravelMode.DRIVING
+  }, (result, status) => {
+    if (status !== 'OK') {
+      toast('⚠️ Could not find that route. Try a different destination.');
+      return;
+    }
+
+    // Render route on map
+    dRend.setDirections(result);
+
+    const leg = result.routes[0].legs[0];
+    steps = leg.steps;
+    curStep = 0;
+    navigating = true;
+
+    // Show ETA
+    document.getElementById('etav').textContent = leg.duration.text;
+    document.getElementById('eta2').textContent = leg.duration.text;
+    document.getElementById('distv').textContent = leg.distance.text;
+    document.getElementById('etachip').style.display = 'block';
+    document.getElementById('speakbtn').style.display = 'block';
+    document.getElementById('recenter').style.display = 'block';
+
+    // Show nav UI
+    document.getElementById('nodest').style.display = 'none';
+    document.getElementById('navpanel').classList.add('open');
+
+    buildProg();
+    updateStepUI();
+
+    // Zoom map to start of route
+    const startLoc = steps[0].start_location;
+    map.panTo(startLoc);
+    map.setZoom(17);
+
+    // Place/move car at start
+    updateCarPosition({lat:startLoc.lat(), lng:startLoc.lng()}, null);
+
+    // Announce start
+    const startPhrase = ph('start');
+    toast('🗺️ ' + startPhrase);
+    speak(startPhrase);
+
+    // Begin GPS tracking
+    startGPSTracking();
+
+    applyStyle();
+    loadPOIs(leg);
+  });
+}
+
+function buildProg() {
+  const pr = document.getElementById('progrow');
+  pr.innerHTML = '';
+  steps.forEach((_, i) => {
+    const s = document.createElement('div');
+    s.className = 'ps' + (i===0?' done':'');
+    s.id = 'ps'+i;
+    pr.appendChild(s);
+  });
+}
+
+function updateStepUI() {
+  const s = steps[curStep];
+  if (!s) return;
+  const mv = s.maneuver || 'straight';
+  const type = mvType(mv);
+  document.getElementById('stepico').textContent = SI[type] || '⬆️';
+  const instr = stripHTML(s.instructions);
+  document.getElementById('steproad').textContent = instr.length > 65 ? instr.slice(0,62)+'...' : instr;
+  document.getElementById('stepdist').textContent = s.distance.text + ' · ' + s.duration.text;
+  document.getElementById('stepnum').textContent = (curStep+1)+'/'+steps.length;
+  document.getElementById('stepcntv').textContent = (curStep+1)+'/'+steps.length;
+  document.querySelectorAll('.ps').forEach((el,i) => el.classList.toggle('done', i<=curStep));
+  document.getElementById('nextbtn').textContent = curStep===steps.length-1 ? '🏁 Finish!' : '✅ Next Step';
+  applyStyle();
+}
+
+function announceStep(idx) {
+  const s = steps[idx];
+  if (!s) return;
+  const mv = s.maneuver || 'straight';
+  const type = mvType(mv);
+  const funPhrase = ph(type);
+  const realInstr = stripHTML(s.instructions);
+  const fullMsg = funPhrase + '. ' + realInstr;
+  toast(funPhrase);
+  speak(fullMsg);
+}
+
+function nextStep() {
+  unlockSpeech();
+  if (curStep < steps.length - 1) {
+    curStep++;
+    updateStepUI();
+    announceStep(curStep);
+    // Zoom map to next step location
+    const loc = steps[curStep].start_location;
+    map.panTo({lat: loc.lat(), lng: loc.lng()});
+    map.setZoom(17);
+  } else {
+    triggerArrived();
+  }
+}
+
+function triggerArrived() {
+  const p = ph('arrived');
+  toast('🎉 ' + p, 7000);
+  speak(p);
+  document.getElementById('arrivetxt').textContent = '🎉 You Arrived!';
+  document.getElementById('arrivebox').classList.add('show');
+  document.getElementById('etachip').style.display = 'none';
+  document.getElementById('speakbtn').style.display = 'none';
+  document.getElementById('recenter').style.display = 'none';
+  stopGPSTracking();
+  if (carMark) { carMark.setMap(null); carMark = null; }
+  setTimeout(() => {
+    document.getElementById('arrivebox').classList.remove('show');
+    document.getElementById('navpanel').classList.remove('open');
+    document.getElementById('poipanel').classList.remove('open');
+    document.getElementById('nodest').style.display = 'block';
+    navigating = false;
+    steps = [];
+  }, 6000);
+}
+
+function missedTurn() {
+  unlockSpeech();
+  const p = ph('missed');
+  toast('🔄 ' + p);
+  speak(p);
+  if (destStr) startNav(destStr);
+}
+
+// ═══════════════════════════════════════════════════════
+// POIs
+// ═══════════════════════════════════════════════════════
+function loadPOIs(leg) {
+  if (!pSvc) return;
+  const mid = leg.steps[Math.floor(leg.steps.length/2)].start_location;
+  pSvc.nearbySearch({
+    location: mid, radius: 3000, type: ['tourist_attraction']
+  }, (results, status) => {
+    if (status !== google.maps.places.PlacesServiceStatus.OK || !results) return;
+    const top = results.filter(p => p.rating >= 4.0)
+      .sort((a,b) => (b.rating||0)-(a.rating||0)).slice(0,4);
+    if (!top.length) return;
+
+    document.getElementById('poipanel').classList.add('open');
+    document.getElementById('poicnt').textContent = top.length + ' spots';
+    const list = document.getElementById('poilist');
+    list.innerHTML = '';
+
+    top.forEach(place => {
+      const isFree = !place.price_level || place.price_level === 0;
+      const t = place.types || [];
+      const ico = t.includes('park')?'🌿':t.includes('museum')?'🎨':t.includes('aquarium')?'🐠':t.includes('zoo')?'🦁':t.includes('art_gallery')?'🖼️':'🏛️';
+      const div = document.createElement('div');
+      div.className = 'poiitem';
+      const sn = place.name.replace(/'/g,"\\'");
+      div.innerHTML = `
+        <div class="poiico">${ico}</div>
+        <div class="poiinfo">
+          <div class="poinr">
+            <div class="poiname">${place.name}</div>
+            <div class="poibadge ${isFree?'free':'paid'}">${isFree?'FREE':'Paid'}</div>
+          </div>
+          <div class="poidesc">${t.slice(0,2).join(', ').replace(/_/g,' ')}</div>
+          <div class="poimeta">
+            <span class="poirat">⭐ ${place.rating}</span>
+            <span class="poidst">${place.vicinity?place.vicinity.split(',')[0]:'Nearby'}</span>
+          </div>
+        </div>
+        <button class="poibtn" onclick="addStop('${place.place_id}','${sn}')">Stop</button>
+      `;
+      list.appendChild(div);
+    });
+    applyStyle();
+  });
+}
+
+function addStop(pid, name) {
+  unlockSpeech();
+  const p = ph('poi') + ' Adding stop at ' + name;
+  toast(p); speak(p);
+  pSvc.getDetails({placeId:pid, fields:['geometry']}, (place, status) => {
+    if (status !== google.maps.places.PlacesServiceStatus.OK || !place) return;
+    const origin = userLoc || {lat:40.7128,lng:-74.0060};
+    dSvc.route({
+      origin, destination: destStr,
+      waypoints:[{location:place.geometry.location, stopover:true}],
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (result, status) => {
+      if (status !== 'OK') return;
+      dRend.setDirections(result);
+      steps = result.routes[0].legs.flatMap(l => l.steps);
+      curStep = 0;
+      buildProg();
+      updateStepUI();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// MAP INIT — called by Google Maps API
+// ═══════════════════════════════════════════════════════
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat:40.7128, lng:-74.0060},
+    zoom: 13,
+    mapTypeId: 'roadmap',
+    zoomControl: true,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    gestureHandling: 'greedy'
+  });
+
+  dSvc = new google.maps.DirectionsService();
+  dRend = new google.maps.DirectionsRenderer({
+    map,
+    suppressMarkers: false,
+    polylineOptions: {strokeColor:'#3B82F6', strokeWeight:7, strokeOpacity:0.9}
+  });
+  pSvc = new google.maps.places.PlacesService(map);
+  acSvc = new google.maps.places.AutocompleteService();
+  tLayer = new google.maps.TrafficLayer();
+
+  setupAC();
+
+  // Pre-load voices
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+  }
+
+  // Try to get location immediately
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      userLoc = {lat:pos.coords.latitude, lng:pos.coords.longitude};
+      map.panTo(userLoc);
+      map.setZoom(15);
+      // Blue dot for user
+      new google.maps.Marker({
+        position: userLoc, map,
+        zIndex: 100,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: '#3B82F6',
+          fillOpacity: 1,
+          strokeColor: '#fff',
+          strokeWeight: 2.5
+        }
+      });
+    }, () => {});
+  }
+
+  applyStyle();
+  document.getElementById('loading').style.display = 'none';
+}
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBgOroc8hFOq6MeE691u_-rbtNT0Zt4ZtA&libraries=places&callback=initMap" async defer></script>
+</body>
+</html>
