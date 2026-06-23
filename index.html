@@ -50,6 +50,7 @@ body{display:flex;flex-direction:column}
 #map-eta{position:absolute;top:10px;left:10px;background:rgba(17,24,39,.92);border-radius:10px;padding:7px 11px;border:1px solid #374151;display:none;z-index:10}
 #map-eta .elbl{font-size:9px;color:#9ca3af}
 #map-eta .eval{font-size:15px;font-weight:900;color:#fff;line-height:1}
+#speak-btn{position:absolute;top:10px;right:10px;background:rgba(17,24,39,.92);border:1px solid #374151;border-radius:10px;padding:7px 11px;font-size:18px;cursor:pointer;z-index:10;display:none}
 #arrived-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);z-index:20;backdrop-filter:blur(4px)}
 #arrived-overlay.show{display:flex}
 #arrived-box{text-align:center}
@@ -119,7 +120,6 @@ body{display:flex;flex-direction:column}
 
 <div id="loading"><div class="spin">🧭</div><p>Loading FunNav...</p></div>
 
-<!-- Header -->
 <div id="header">
   <div id="header-left">
     <span style="font-size:22px">🧭</span>
@@ -128,7 +128,6 @@ body{display:flex;flex-direction:column}
   <button id="voice-toggle-btn" onclick="toggleVoicePanel()">🎠 Kid Mode</button>
 </div>
 
-<!-- Voice Panel -->
 <div id="voice-panel">
   <div class="panel-title">Choose Your Voice Mode</div>
   <div class="mode-grid">
@@ -149,7 +148,6 @@ body{display:flex;flex-direction:column}
   </div>
 </div>
 
-<!-- Search -->
 <div id="search-bar">
   <div id="search-wrap">
     <span id="search-icon">🔍</span>
@@ -161,7 +159,6 @@ body{display:flex;flex-direction:column}
   <button id="go-btn" onclick="startSearch()">Go</button>
 </div>
 
-<!-- Map toggles -->
 <div id="map-toggles">
   <button class="mtog active" id="tog-roadmap" onclick="setMapType('roadmap')">🗺️ Map</button>
   <button class="mtog" id="tog-satellite" onclick="setMapType('satellite')">🛰️ Satellite</button>
@@ -169,18 +166,16 @@ body{display:flex;flex-direction:column}
   <button id="lang-tog" onclick="cycleLang()">🇺🇸 EN</button>
 </div>
 
-<!-- Map -->
 <div id="map-wrap">
   <div id="map"></div>
   <div id="map-eta"><div class="elbl">ETA</div><div class="eval" id="eta-val">--</div></div>
+  <button id="speak-btn" onclick="speakCurrent()" title="Repeat direction">🔊</button>
   <div id="arrived-overlay">
     <div id="arrived-box"><div class="big">🎉</div><div class="txt">You Arrived!</div></div>
   </div>
 </div>
 
-<!-- Bottom panel -->
 <div id="bottom">
-  <!-- Nav panel -->
   <div id="nav-panel">
     <div id="eta-info">
       <div class="eblock"><div class="elbl">ETA</div><div class="eval" id="eta-text">--</div></div>
@@ -203,13 +198,11 @@ body{display:flex;flex-direction:column}
     </div>
   </div>
 
-  <!-- POI panel -->
   <div id="poi-panel">
     <div id="poi-hdr"><h3>✨ Points of Interest Along Route</h3><span id="poi-count">0 spots</span></div>
     <div id="poi-list"></div>
   </div>
 
-  <!-- No destination -->
   <div id="no-dest">
     <p>Search above or tap a quick destination to begin</p>
     <div class="qgrid">
@@ -221,54 +214,53 @@ body{display:flex;flex-direction:column}
   </div>
 </div>
 
-<!-- Toast -->
 <div id="toast"><div id="toast-inner"><p id="toast-msg"></p></div></div>
 
 <script>
-// ─── Phrases ────────────────────────────────────────────────────────────────
+// ─── Phrases ─────────────────────────────────────────────────────────────────
 const PHRASES = {
   fun:{
     en:{
-      start:["Adventure awaits! Navigation starting! 🌟","To infinity and beyond! 🚀","Buckle up! Simba says let's ride! 🦁"],
-      right:["Turn RIGHT, partner! Yeehaw! 🤠","Turn RIGHT like Simba chasing his destiny! 🦁","RIGHT! Mickey would be proud! 🐭","Swish and flick to the RIGHT! ✨"],
-      left:["Hang a LEFT! Buzz Lightyear says so! 🚀","LEFT like Elsa waving her magic hand! ❄️","Bear LEFT! Great adventure ahead! 🦁","Just keep swimming... to the LEFT! 🐠"],
-      straight:["Straight ahead, brave explorer! 🌟","Onward! Like Woody says — there's a snake in my boot! 🐍","Straight ahead, champ! 🌈"],
-      uturn:["U-turn time! Even heroes backtrack! 🔄","Nemo found his way back — so will we! 🐠"],
-      arrived:["YOU MADE IT! 🎉 Worthy of a Disney movie!","HOORAY! Hakuna Matata! 🦁🐗","To infinity and beyond... YOU MADE IT! 🚀🌟"],
-      missed:["Uh oh! Missed it! Rerouting the adventure! 🗺️","Oopsie! Even Buzz takes detours! Rerouting... 🚀"],
-      poi:["Psst! Something AMAZING is nearby! ✨","Ooooh! A magical stop is close! 🌟"],
+      start:["Adventure awaits! Let's GO! 🌟","To infinity and beyond! Navigation starting! 🚀","Buckle up! Simba says let's ride! 🦁"],
+      right:["Turn RIGHT, partner! Yeehaw!","Turn RIGHT like Simba chasing his destiny!","RIGHT! Mickey would be proud!","Swish and flick to the RIGHT!"],
+      left:["Hang a LEFT! Buzz Lightyear says so!","LEFT like Elsa waving her magic hand!","Bear LEFT! Great adventure ahead!","Just keep swimming to the LEFT!"],
+      straight:["Straight ahead, brave explorer!","Onward! Like Woody says, there's a snake in my boot!","Straight ahead, champ! You've got this!"],
+      uturn:["U-turn time! Even heroes backtrack sometimes!","Nemo found his way back, and so will we!"],
+      arrived:["YOU MADE IT! That was worthy of a Disney movie!","HOORAY! Hakuna Matata, no more worries!","To infinity and beyond, and YOU MADE IT!"],
+      missed:["Uh oh! Missed it! That's okay, rerouting the adventure!","Oopsie! Even Buzz Lightyear takes detours! Rerouting!"],
+      poi:["Psst! Something AMAZING is nearby!","Ooooh! A magical stop is close!"],
     },
     es:{
-      start:["¡La aventura te espera! 🌟","¡Al infinito y más allá! 🚀"],
-      right:["¡Gira a la DERECHA como Simba! 🦁","¡A la DERECHA! ¡Buzz dice que sí! 🚀","¡Dobla a la DERECHA, campeón! ⭐"],
-      left:["¡Gira a la IZQUIERDA como Elsa! ❄️","¡Izquierda! ¡Sigue nadando! 🐠","¡Izquierda, valiente! ¡Hakuna Matata! 🦁"],
-      straight:["¡Sigue recto, aventurero! 🌈","¡Adelante! ¡Hay una serpiente en mi bota! 🐍"],
-      uturn:["¡Da la vuelta! ¡Hasta los héroes retroceden! 🔄"],
-      arrived:["¡¡LLEGASTE!! 🎉 ¡Digno de Disney!","¡Hakuna Matata! ¡Ya llegaste! 🦁"],
-      missed:["¡Ay, ay, ay! ¡Recalculando! 🗺️","¡Hasta Buzz se equivoca! ¡Recalculando! 🚀"],
-      poi:["¡Hay algo INCREÍBLE cerca! ✨"],
+      start:["La aventura te espera!","Al infinito y mas alla, navegacion iniciada!"],
+      right:["Gira a la DERECHA como Simba!","A la DERECHA! Buzz Lightyear dice que si!","Dobla a la DERECHA, campeon!"],
+      left:["Gira a la IZQUIERDA como Elsa!","A la IZQUIERDA! Sigue nadando!","Izquierda, valiente! Hakuna Matata!"],
+      straight:["Sigue recto, aventurero!","Adelante! Hay una serpiente en mi bota!"],
+      uturn:["Da la vuelta! Hasta los heroes retroceden!"],
+      arrived:["Llegaste! Una aventura digna de Disney!","Hakuna Matata! Ya llegaste!"],
+      missed:["Ay ay ay! Recalculando la aventura!","Hasta Buzz se equivoca! Recalculando!"],
+      poi:["Hay algo increible cerca!"],
     }
   },
   adult:{
     en:{
-      start:["Alright, let's get this over with. 😒","Fine. Try not to screw it up. 😤"],
-      right:["Turn the hell RIGHT! 😤","RIGHT! Not that complicated, genius! 🙄","TURN RIGHT! Pay attention! 🤦","Hey jackass, RIGHT TURN! 👀"],
-      left:["LEFT! What are you doing?! 😠","LEFT, Einstein. Not rocket science! 🚀","LEFT, damn it! 🤦","Wake up! LEFT TURN! ☕"],
-      straight:["Straight. Can you handle that? 😒","Straight. Don't screw it up. 🙄","Keep it straight. I'm watching. 👁️"],
-      uturn:["U-turn, genius. You went the wrong way. 🙄","U-turn. Now. Don't argue. 😤"],
-      arrived:["FINALLY. You made it. Only took forever. 🎉","Took longer than it should've, but you're here. 🙄","Congrats. You arrived. Go celebrate. 🏆"],
-      missed:["ARE YOU SERIOUS?! You missed it! AGAIN! 🤬","You blew right past it! Recalculating, genius. 😤","GREAT. Missed the turn. Rerouting... 🙄"],
-      poi:["Something nearby that doesn't totally suck. Check it? 😏","Decent stop ahead. Don't ruin the detour. 😒"],
+      start:["Alright, let's get this over with.","Fine. I'll get you there. Try not to screw it up."],
+      right:["Turn the hell RIGHT! Did you miss the sign?","RIGHT! Not that complicated, genius!","TURN RIGHT! Pay attention!","Hey jackass, RIGHT TURN. Eyes on the road!"],
+      left:["LEFT! Turn LEFT! What are you doing?","It's a LEFT turn, Einstein. Not rocket science!","LEFT, damn it! I clearly said LEFT!","Holy smokes, LEFT TURN! Wake up!"],
+      straight:["Just go straight. Can you handle that? Don't screw it up.","Straight ahead. And no, we're not stopping for snacks.","Keep it straight. No weird detours. I'm watching you."],
+      uturn:["Make a U-turn, genius. You went the wrong way.","U-turn. Now. Don't argue with me."],
+      arrived:["FINALLY. You made it. Only took forever.","You arrived. Took longer than it should have, but hey.","Destination reached. Go congratulate yourself. You earned it, champ."],
+      missed:["ARE YOU SERIOUS?! You missed the turn! AGAIN! Rerouting!","What the, you blew right past it! Recalculating, genius.","Oh that's just GREAT. Missed the damn turn. Hold on!"],
+      poi:["Hey, there's something nearby that doesn't totally suck. Check it?","Stop ahead rated pretty well. Don't screw up the detour."],
     },
     es:{
-      start:["Bien. Empezando. Sin jaladas. 😒","Vamos. Trata de no arruinarlo. 😤"],
-      right:["¡¿Qué demonios?! ¡DERECHA ya! 😤","¡A la DERECHA! ¿No ves las señales? 🙄","¡DERECHA! ¿En qué mundo estás? 🤦"],
-      left:["¡¡IZQUIERDA!! ¿Qué parte no entiendes? 😠","¡Izquierda, por Dios! ¡Abre los ojos! 👀","¡Izquierda, maldición! 🤦"],
-      straight:["Sigue recto. ¿Puedes? 😒","Recto. Te estoy vigilando. 👁️"],
-      uturn:["Da la vuelta. Ahora. 😤"],
-      arrived:["¡POR FIN! Solo tardaste una eternidad. 🎉","Llegaste. Tómate un momento. 👏"],
-      missed:["¿¿EN SERIO??! ¡Te pasaste! Recalculando... 🤬","¡Madre mía! Recalculando, campeón... 😤"],
-      poi:["Hay algo cerca que no está mal. ¿Lo ves? 😏"],
+      start:["Bien. Empezando la navegacion. Trata de no arruinarlo.","Vamos. Yo te llevo. Sin jaladas."],
+      right:["Que demonios?! Gira a la DERECHA ya!","A la DERECHA, caramba! Es que no ves las senales?","DERECHA! En que mundo estas viviendo?"],
+      left:["IZQUIERDA!! Que parte de izquierda no entiendes?","A la izquierda, por Dios! Abre los ojos!","Izquierda, maldicion!"],
+      straight:["Sigue recto. Puedes con eso? No lo arruines.","Recto, recto. Sin jaladas raras. Te estoy vigilando."],
+      uturn:["Da la vuelta. Ahora. Sin discutir."],
+      arrived:["POR FIN! Llegaste. Solo tardaste una eternidad.","Destino alcanzado. Tomaté un momento para aplaudirte."],
+      missed:["EN SERIO?! Te pasaste la vuelta! Recalculando!","Madre mia! Te pasaste! Recalculando, campeon!"],
+      poi:["Oye, hay algo cerca que no esta mal del todo."],
     }
   },
   boring:{
@@ -276,56 +268,94 @@ const PHRASES = {
       start:["Starting navigation.","Route found. Beginning guidance."],
       right:["Turn right.","In 500 feet, turn right.","Turn right at the intersection."],
       left:["Turn left.","In 500 feet, turn left.","Turn left at the next street."],
-      straight:["Continue straight.","Proceed straight.","Stay on the current route."],
-      uturn:["Make a legal U-turn.","U-turn when safe."],
+      straight:["Continue straight.","Proceed straight for 2 miles.","Stay on the current route."],
+      uturn:["Make a legal U-turn.","U-turn when safe to do so."],
       arrived:["You have arrived at your destination.","Destination reached."],
       missed:["Recalculating route.","Make a U-turn when possible."],
-      poi:["Point of interest nearby.","Attraction ahead on route."],
+      poi:["Point of interest nearby.","Attraction ahead on your route."],
     },
     es:{
-      start:["Iniciando navegación.","Ruta encontrada."],
+      start:["Iniciando navegacion.","Ruta encontrada. Comenzando guia."],
       right:["Gire a la derecha.","En 500 pies, gire a la derecha."],
       left:["Gire a la izquierda.","En 500 pies, gire a la izquierda."],
       straight:["Continúe recto.","Siga en la ruta actual."],
-      uturn:["Dé la vuelta cuando sea posible."],
+      uturn:["De la vuelta cuando sea posible."],
       arrived:["Ha llegado a su destino.","Destino alcanzado."],
-      missed:["Recalculando ruta.","Dé la vuelta cuando sea posible."],
-      poi:["Punto de interés cercano."],
+      missed:["Recalculando ruta.","De la vuelta cuando sea posible."],
+      poi:["Punto de interes cercano."],
     }
   }
 };
 
 const MODES = {
-  fun:    {grad:'linear-gradient(to right,#fb923c,#facc15)'},
-  adult:  {grad:'linear-gradient(to right,#ef4444,#e11d48)'},
-  boring: {grad:'linear-gradient(to right,#6b7280,#475569)'}
+  fun:    {grad:'linear-gradient(to right,#fb923c,#facc15)', label:'🎠 Kid Mode'},
+  adult:  {grad:'linear-gradient(to right,#ef4444,#e11d48)', label:'😤 Unfiltered'},
+  boring: {grad:'linear-gradient(to right,#6b7280,#475569)', label:'🗺️ Boring'}
 };
 
 const MANEUVER_MAP = {
   'turn-right':'right','turn-sharp-right':'right','keep-right':'right','ramp-right':'right','fork-right':'right',
   'turn-left':'left','turn-sharp-left':'left','keep-left':'left','ramp-left':'left','fork-left':'left',
   'uturn-left':'uturn','uturn-right':'uturn',
-  'straight':'straight','merge':'straight','ferry':'straight','ferry-train':'straight',
+  'straight':'straight','merge':'straight','ferry':'straight',
   'roundabout-left':'left','roundabout-right':'right'
 };
 
-const STEP_ICONS = {
-  right:'↗️', left:'↖️', straight:'⬆️', uturn:'↩️'
-};
+const STEP_ICONS = { right:'↗️', left:'↖️', straight:'⬆️', uturn:'↩️' };
 
-// ─── State ───────────────────────────────────────────────────────────────────
+// ─── State ────────────────────────────────────────────────────────────────────
 let map, dirSvc, dirRend, placesSvc, acSvc, trafficLayer;
-let voiceMode = 'fun', language = 'en';
-let steps = [], currentStep = 0, isNavigating = false, trafficOn = false;
-let userLocation = null, currentDest = null;
-let toastTimer = null;
-let mapsReady = false;
+let voiceMode='fun', language='en';
+let steps=[], currentStep=0, isNavigating=false, trafficOn=false;
+let userLocation=null, currentDest=null;
+let toastTimer=null;
+let speechEnabled=false;
+let carMarker=null;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Speech ───────────────────────────────────────────────────────────────────
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = language === 'es' ? 'es-US' : 'en-US';
+  utt.rate = voiceMode === 'fun' ? 1.1 : voiceMode === 'adult' ? 1.0 : 0.95;
+  utt.pitch = voiceMode === 'fun' ? 1.3 : voiceMode === 'adult' ? 0.85 : 1.0;
+  utt.volume = 1.0;
+
+  // Pick a fun voice if available
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length) {
+    let picked = null;
+    if (language === 'es') {
+      picked = voices.find(v => v.lang.startsWith('es')) || null;
+    } else {
+      if (voiceMode === 'fun') {
+        picked = voices.find(v => v.name.includes('Samantha') || v.name.includes('Karen') || v.name.includes('Moira')) ||
+                 voices.find(v => v.lang === 'en-US') || null;
+      } else if (voiceMode === 'adult') {
+        picked = voices.find(v => v.name.includes('Daniel') || v.name.includes('Alex') || v.name.includes('Fred')) ||
+                 voices.find(v => v.lang === 'en-US') || null;
+      } else {
+        picked = voices.find(v => v.lang === 'en-US') || null;
+      }
+    }
+    if (picked) utt.voice = picked;
+  }
+  window.speechSynthesis.speak(utt);
+  speechEnabled = true;
+}
+
+function speakCurrent() {
+  if (!steps[currentStep]) return;
+  const instr = stripHtml(steps[currentStep].instructions);
+  speak(instr);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
 function phrase(type) {
-  const pool = (PHRASES[voiceMode]?.[language]?.[type]) || (PHRASES[voiceMode]?.en?.[type]) || ['Continue.'];
+  const pool = PHRASES[voiceMode]?.[language]?.[type] || PHRASES[voiceMode]?.en?.[type] || ['Continue.'];
   return pick(pool);
 }
 
@@ -339,232 +369,278 @@ function getStepIcon(maneuver) {
 }
 
 function stripHtml(html) {
-  const d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || '';
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return d.textContent || d.innerText || '';
 }
 
-// ─── Toast ───────────────────────────────────────────────────────────────────
+// ─── Toast ────────────────────────────────────────────────────────────────────
 function showToast(msg, dur=5000) {
   document.getElementById('toast-msg').textContent = msg;
   document.getElementById('toast').classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('show'), dur);
+  toastTimer = setTimeout(()=>document.getElementById('toast').classList.remove('show'), dur);
 }
 
-// ─── Mode / Lang ─────────────────────────────────────────────────────────────
+// ─── Mode / Lang ──────────────────────────────────────────────────────────────
 function applyGrad() {
   const g = MODES[voiceMode].grad;
-  ['header','go-btn','next-btn','step-icon','toast-inner'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.background = g;
+  ['header','go-btn','next-btn','step-icon','toast-inner'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.background=g;
   });
-  document.querySelectorAll('.poi-btn').forEach(b => b.style.background = g);
-  document.querySelectorAll('.pseg.done').forEach(s => s.style.background = g.replace('linear-gradient(to right,','').split(',')[0]);
+  document.querySelectorAll('.poi-btn').forEach(b=>b.style.background=g);
 }
 
 function setMode(m) {
-  voiceMode = m;
-  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+  voiceMode=m;
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('active'));
   document.getElementById('mode-'+m).classList.add('active');
-  const labels = {fun:'🎠 Kid Mode', adult:'😤 Unfiltered', boring:'🗺️ Boring'};
-  document.getElementById('voice-toggle-btn').textContent = labels[m];
+  document.getElementById('voice-toggle-btn').textContent=MODES[m].label;
   applyGrad();
 }
 
 function setLang(l) {
-  language = l;
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  language=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('lang-'+l).classList.add('active');
-  document.getElementById('lang-tog').textContent = l === 'en' ? '🇺🇸 EN' : '🇪🇸 ES';
+  document.getElementById('lang-tog').textContent=l==='en'?'🇺🇸 EN':'🇪🇸 ES';
 }
 
-function cycleLang() { setLang(language === 'en' ? 'es' : 'en'); }
-function toggleVoicePanel() { document.getElementById('voice-panel').classList.toggle('open'); }
+function cycleLang(){setLang(language==='en'?'es':'en');}
+function toggleVoicePanel(){document.getElementById('voice-panel').classList.toggle('open');}
 
-// ─── Map type / traffic ───────────────────────────────────────────────────────
+// ─── Map controls ─────────────────────────────────────────────────────────────
 function setMapType(type) {
-  if (!map) return;
+  if(!map) return;
   map.setMapTypeId(type);
-  document.querySelectorAll('.mtog').forEach(b => b.classList.remove('active'));
-  const el = document.getElementById('tog-'+type);
-  if (el) el.classList.add('active');
+  document.querySelectorAll('.mtog').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('tog-'+type);
+  if(el) el.classList.add('active');
 }
 
 function toggleTraffic() {
-  if (!map || !trafficLayer) return;
-  trafficOn = !trafficOn;
-  trafficLayer.setMap(trafficOn ? map : null);
-  document.getElementById('tog-traffic').classList.toggle('active', trafficOn);
+  if(!map||!trafficLayer) return;
+  trafficOn=!trafficOn;
+  trafficLayer.setMap(trafficOn?map:null);
+  document.getElementById('tog-traffic').classList.toggle('active',trafficOn);
 }
 
 // ─── Location ─────────────────────────────────────────────────────────────────
 function useMyLocation() {
-  if (!navigator.geolocation) { showToast('⚠️ Geolocation not supported.'); return; }
-  navigator.geolocation.getCurrentPosition(pos => {
-    userLocation = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-    if (map) {
-      map.setCenter(userLocation);
-      map.setZoom(15);
-    }
+  if(!navigator.geolocation){showToast('⚠️ Geolocation not supported.');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    if(map){map.setCenter(userLocation);map.setZoom(15);}
     showToast('📍 Got your location! Search a destination.');
-  }, () => showToast('⚠️ Could not get location. Please allow access.'));
+  },()=>showToast('⚠️ Could not get location. Please allow access.'));
 }
 
 // ─── Autocomplete ─────────────────────────────────────────────────────────────
-function clearAC() { document.getElementById('ac-list').innerHTML = ''; }
+function clearAC(){document.getElementById('ac-list').innerHTML='';}
 
 function setupAutocomplete() {
-  const input = document.getElementById('search-input');
-  input.addEventListener('input', () => {
-    const val = input.value.trim();
-    if (!val || !acSvc) { clearAC(); return; }
-    acSvc.getPlacePredictions({input: val}, (preds, status) => {
+  const input=document.getElementById('search-input');
+  input.addEventListener('input',()=>{
+    const val=input.value.trim();
+    if(!val||!acSvc){clearAC();return;}
+    acSvc.getPlacePredictions({input:val},(preds,status)=>{
       clearAC();
-      if (status !== google.maps.places.PlacesServiceStatus.OK || !preds) return;
-      const list = document.getElementById('ac-list');
-      preds.slice(0,5).forEach(p => {
-        const item = document.createElement('div');
-        item.className = 'ac-item';
-        item.textContent = '📍 ' + p.description;
-        item.onclick = () => { input.value = p.description; clearAC(); navigateTo(p.description); };
+      if(status!==google.maps.places.PlacesServiceStatus.OK||!preds) return;
+      const list=document.getElementById('ac-list');
+      preds.slice(0,5).forEach(p=>{
+        const item=document.createElement('div');
+        item.className='ac-item';
+        item.textContent='📍 '+p.description;
+        item.onclick=()=>{input.value=p.description;clearAC();navigateTo(p.description);};
         list.appendChild(item);
       });
     });
   });
-  document.addEventListener('click', e => { if (!e.target.closest('#search-wrap')) clearAC(); });
+  document.addEventListener('click',e=>{if(!e.target.closest('#search-wrap'))clearAC();});
 }
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 function startSearch() {
-  const q = document.getElementById('search-input').value.trim();
-  if (!q) { showToast('Enter a destination first!'); return; }
+  const q=document.getElementById('search-input').value.trim();
+  if(!q){showToast('Enter a destination first!');return;}
   clearAC();
   navigateTo(q);
 }
 
 function quickNav(dest) {
-  document.getElementById('search-input').value = dest;
+  document.getElementById('search-input').value=dest;
   navigateTo(dest);
 }
 
 function navigateTo(destination) {
-  if (!map || !dirSvc || !dirRend) { showToast('⚠️ Maps still loading, try again in a moment.'); return; }
-  currentDest = destination;
-  const origin = userLocation || {lat:40.7128, lng:-74.0060};
+  if(!map||!dirSvc||!dirRend){showToast('⚠️ Maps still loading, try again.');return;}
+  currentDest=destination;
+  const origin=userLocation||{lat:40.7128,lng:-74.0060};
 
   dirSvc.route({
     origin,
     destination,
-    travelMode: google.maps.TravelMode.DRIVING,
-  }, (result, status) => {
-    if (status !== 'OK') {
-      showToast('⚠️ Could not find route. Try a different destination.');
-      return;
-    }
+    travelMode:google.maps.TravelMode.DRIVING,
+  },(result,status)=>{
+    if(status!=='OK'){showToast('⚠️ Could not find route. Try a different destination.');return;}
 
     dirRend.setDirections(result);
-    const leg = result.routes[0].legs[0];
-    steps = leg.steps;
-    currentStep = 0;
-    isNavigating = true;
+    const leg=result.routes[0].legs[0];
+    steps=leg.steps;
+    currentStep=0;
+    isNavigating=true;
 
-    document.getElementById('eta-val').textContent = leg.duration.text;
-    document.getElementById('eta-text').textContent = leg.duration.text;
-    document.getElementById('dist-text').textContent = leg.distance.text;
-    document.getElementById('map-eta').style.display = 'block';
+    document.getElementById('eta-val').textContent=leg.duration.text;
+    document.getElementById('eta-text').textContent=leg.duration.text;
+    document.getElementById('dist-text').textContent=leg.distance.text;
+    document.getElementById('map-eta').style.display='block';
+    document.getElementById('speak-btn').style.display='block';
 
-    document.getElementById('no-dest').style.display = 'none';
+    document.getElementById('no-dest').style.display='none';
     document.getElementById('nav-panel').classList.add('open');
 
     buildProgress();
     updateStepUI();
-    showToast('🗺️ ' + phrase('start'));
-    applyGrad();
+    zoomToStep(0);
 
+    const startPhrase = phrase('start');
+    showToast('🗺️ ' + startPhrase);
+    speak(startPhrase);
+    applyGrad();
     loadPOIs(leg);
   });
 }
 
 function buildProgress() {
-  const pr = document.getElementById('prog-row');
-  pr.innerHTML = '';
-  steps.forEach((_, i) => {
-    const s = document.createElement('div');
-    s.className = 'pseg' + (i === 0 ? ' done' : '');
-    s.id = 'ps-' + i;
+  const pr=document.getElementById('prog-row');
+  pr.innerHTML='';
+  steps.forEach((_,i)=>{
+    const s=document.createElement('div');
+    s.className='pseg'+(i===0?' done':'');
+    s.id='ps-'+i;
     pr.appendChild(s);
   });
 }
 
+// ─── Zoom map to current step location ───────────────────────────────────────
+function zoomToStep(index) {
+  if(!map||!steps[index]) return;
+  const step=steps[index];
+  const loc=step.start_location;
+
+  // Move map to the step location with a good zoom
+  map.panTo(loc);
+  map.setZoom(17);
+
+  // Move or create a car marker
+  if(carMarker) {
+    carMarker.setPosition(loc);
+  } else {
+    carMarker = new google.maps.Marker({
+      position: loc,
+      map,
+      title: 'Your position',
+      icon: {
+        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+        scale: 5,
+        fillColor: '#3B82F6',
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 2,
+        rotation: getBearing(step)
+      },
+      zIndex: 999
+    });
+  }
+}
+
+function getBearing(step) {
+  if(!step) return 0;
+  const start=step.start_location;
+  const end=step.end_location;
+  const lat1=start.lat()*Math.PI/180;
+  const lat2=end.lat()*Math.PI/180;
+  const dLng=(end.lng()-start.lng())*Math.PI/180;
+  const y=Math.sin(dLng)*Math.cos(lat2);
+  const x=Math.cos(lat1)*Math.sin(lat2)-Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLng);
+  return (Math.atan2(y,x)*180/Math.PI+360)%360;
+}
+
 function updateStepUI() {
-  const s = steps[currentStep];
-  if (!s) return;
-  const maneuver = s.maneuver || 'straight';
-  document.getElementById('step-icon').textContent = getStepIcon(maneuver);
-  const instr = stripHtml(s.instructions);
-  document.getElementById('step-road').textContent = instr.length > 55 ? instr.slice(0,52)+'...' : instr;
-  document.getElementById('step-dist').textContent = s.distance.text + ' · ' + s.duration.text;
-  document.getElementById('step-num').textContent = (currentStep+1) + '/' + steps.length;
-  document.getElementById('step-count').textContent = (currentStep+1) + '/' + steps.length;
-  document.querySelectorAll('.pseg').forEach((el, i) => el.classList.toggle('done', i <= currentStep));
-  document.getElementById('next-btn').textContent = currentStep === steps.length-1 ? '🏁 Finish!' : '✅ Next Step';
+  const s=steps[currentStep];
+  if(!s) return;
+  const maneuver=s.maneuver||'straight';
+  document.getElementById('step-icon').textContent=getStepIcon(maneuver);
+  const instr=stripHtml(s.instructions);
+  document.getElementById('step-road').textContent=instr.length>60?instr.slice(0,57)+'...':instr;
+  document.getElementById('step-dist').textContent=s.distance.text+' · '+s.duration.text;
+  document.getElementById('step-num').textContent=(currentStep+1)+'/'+steps.length;
+  document.getElementById('step-count').textContent=(currentStep+1)+'/'+steps.length;
+  document.querySelectorAll('.pseg').forEach((el,i)=>el.classList.toggle('done',i<=currentStep));
+  document.getElementById('next-btn').textContent=currentStep===steps.length-1?'🏁 Finish!':'✅ Next Step';
   applyGrad();
 }
 
 function advanceStep() {
-  if (currentStep < steps.length - 1) {
+  if(currentStep<steps.length-1){
     currentStep++;
     updateStepUI();
-    const m = steps[currentStep].maneuver || 'straight';
-    showToast(phrase(getManeuverType(m)));
+    zoomToStep(currentStep);
+    const m=steps[currentStep].maneuver||'straight';
+    const type=getManeuverType(m);
+    const instr=stripHtml(steps[currentStep].instructions);
+    const p=phrase(type);
+    showToast(p);
+    // Speak the actual instruction + fun phrase
+    speak(p + '. ' + instr);
   } else {
-    showToast('🎉 ' + phrase('arrived'), 7000);
+    const p=phrase('arrived');
+    showToast('🎉 '+p,7000);
+    speak(p);
     document.getElementById('arrived-overlay').classList.add('show');
-    document.getElementById('map-eta').style.display = 'none';
-    setTimeout(() => {
+    document.getElementById('map-eta').style.display='none';
+    document.getElementById('speak-btn').style.display='none';
+    if(carMarker){carMarker.setMap(null);carMarker=null;}
+    setTimeout(()=>{
       document.getElementById('arrived-overlay').classList.remove('show');
       document.getElementById('nav-panel').classList.remove('open');
       document.getElementById('poi-panel').classList.remove('open');
-      document.getElementById('no-dest').style.display = 'block';
-      isNavigating = false;
-    }, 5000);
+      document.getElementById('no-dest').style.display='block';
+      isNavigating=false;
+    },5000);
   }
 }
 
 function missedTurn() {
-  showToast('🔄 ' + phrase('missed'));
-  if (currentDest) navigateTo(currentDest);
+  const p=phrase('missed');
+  showToast('🔄 '+p);
+  speak(p);
+  if(currentDest) navigateTo(currentDest);
 }
 
 // ─── POIs ─────────────────────────────────────────────────────────────────────
 function loadPOIs(leg) {
-  if (!placesSvc) return;
-  const mid = leg.steps[Math.floor(leg.steps.length / 2)].start_location;
-  placesSvc.nearbySearch({
-    location: mid,
-    radius: 3000,
-    type: ['tourist_attraction']
-  }, (results, status) => {
-    if (status !== google.maps.places.PlacesServiceStatus.OK || !results) return;
-    const top = results
-      .filter(p => p.rating >= 4.0)
-      .sort((a,b) => (b.rating||0)-(a.rating||0))
-      .slice(0,4);
-    if (!top.length) return;
+  if(!placesSvc) return;
+  const mid=leg.steps[Math.floor(leg.steps.length/2)].start_location;
+  placesSvc.nearbySearch({location:mid,radius:3000,type:['tourist_attraction']},(results,status)=>{
+    if(status!==google.maps.places.PlacesServiceStatus.OK||!results) return;
+    const top=results.filter(p=>p.rating>=4.0).sort((a,b)=>(b.rating||0)-(a.rating||0)).slice(0,4);
+    if(!top.length) return;
 
     document.getElementById('poi-panel').classList.add('open');
-    document.getElementById('poi-count').textContent = top.length + ' spots';
-    const list = document.getElementById('poi-list');
-    list.innerHTML = '';
+    document.getElementById('poi-count').textContent=top.length+' spots';
+    const list=document.getElementById('poi-list');
+    list.innerHTML='';
 
-    top.forEach(place => {
-      const isFree = !place.price_level || place.price_level === 0;
-      const t = place.types || [];
-      const ico = t.includes('park')?'🌿':t.includes('museum')?'🎨':t.includes('aquarium')?'🐠':t.includes('zoo')?'🦁':t.includes('art_gallery')?'🖼️':'🏛️';
-      const div = document.createElement('div');
-      div.className = 'poi-item';
-      const safeId = place.place_id.replace(/[^a-zA-Z0-9]/g,'');
-      const safeName = place.name.replace(/'/g,"\\'");
-      div.innerHTML = `
+    top.forEach(place=>{
+      const isFree=!place.price_level||place.price_level===0;
+      const t=place.types||[];
+      const ico=t.includes('park')?'🌿':t.includes('museum')?'🎨':t.includes('aquarium')?'🐠':t.includes('zoo')?'🦁':t.includes('art_gallery')?'🖼️':'🏛️';
+      const div=document.createElement('div');
+      div.className='poi-item';
+      const safeName=place.name.replace(/'/g,"\\'");
+      div.innerHTML=`
         <div class="poi-ico">${ico}</div>
         <div class="poi-info">
           <div class="poi-nr">
@@ -585,69 +661,76 @@ function loadPOIs(leg) {
   });
 }
 
-function addDetour(placeId, name) {
-  showToast(phrase('poi') + ' Detour to ' + name + ' added!');
-  if (!placesSvc) return;
-  placesSvc.getDetails({placeId, fields:['geometry']}, (place, status) => {
-    if (status !== google.maps.places.PlacesServiceStatus.OK || !place) return;
-    const loc = place.geometry.location;
-    const origin = userLocation || {lat:40.7128, lng:-74.0060};
+function addDetour(placeId,name) {
+  const p=phrase('poi')+' Detour to '+name+' added!';
+  showToast(p);
+  speak(p);
+  if(!placesSvc) return;
+  placesSvc.getDetails({placeId,fields:['geometry']},(place,status)=>{
+    if(status!==google.maps.places.PlacesServiceStatus.OK||!place) return;
+    const loc=place.geometry.location;
+    const origin=userLocation||{lat:40.7128,lng:-74.0060};
     dirSvc.route({
-      origin,
-      destination: currentDest,
-      waypoints: [{location: loc, stopover: true}],
-      travelMode: google.maps.TravelMode.DRIVING,
-    }, (result, status) => {
-      if (status !== 'OK') return;
+      origin,destination:currentDest,
+      waypoints:[{location:loc,stopover:true}],
+      travelMode:google.maps.TravelMode.DRIVING,
+    },(result,status)=>{
+      if(status!=='OK') return;
       dirRend.setDirections(result);
-      steps = result.routes[0].legs.flatMap(l => l.steps);
-      currentStep = 0;
+      steps=result.routes[0].legs.flatMap(l=>l.steps);
+      currentStep=0;
       buildProgress();
       updateStepUI();
+      zoomToStep(0);
     });
   });
 }
 
-// ─── Map Init (called by Google Maps callback) ────────────────────────────────
+// ─── Map Init ─────────────────────────────────────────────────────────────────
 function initMap() {
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: {lat:40.7128, lng:-74.0060},
-    zoom: 13,
-    mapTypeId: 'roadmap',
-    zoomControl: true,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    gestureHandling: 'greedy',
+  map=new google.maps.Map(document.getElementById('map'),{
+    center:{lat:40.7128,lng:-74.0060},
+    zoom:13,
+    mapTypeId:'roadmap',
+    zoomControl:true,
+    mapTypeControl:false,
+    streetViewControl:false,
+    fullscreenControl:false,
+    gestureHandling:'greedy',
   });
 
-  dirSvc = new google.maps.DirectionsService();
-  dirRend = new google.maps.DirectionsRenderer({
+  dirSvc=new google.maps.DirectionsService();
+  dirRend=new google.maps.DirectionsRenderer({
     map,
-    polylineOptions: {strokeColor:'#3B82F6', strokeWeight:6, strokeOpacity:0.9}
+    suppressMarkers:false,
+    polylineOptions:{strokeColor:'#3B82F6',strokeWeight:6,strokeOpacity:0.9}
   });
-  placesSvc = new google.maps.places.PlacesService(map);
-  acSvc = new google.maps.places.AutocompleteService();
-  trafficLayer = new google.maps.TrafficLayer();
+  placesSvc=new google.maps.places.PlacesService(map);
+  acSvc=new google.maps.places.AutocompleteService();
+  trafficLayer=new google.maps.TrafficLayer();
 
   setupAutocomplete();
 
+  // Load voices early
+  if('speechSynthesis' in window){
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+  }
+
   // Get user location
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
-      userLocation = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      userLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};
       map.setCenter(userLocation);
       map.setZoom(15);
       new google.maps.Marker({
-        position: userLocation, map,
-        icon: {path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#3B82F6', fillOpacity:1, strokeColor:'#fff', strokeWeight:2}
+        position:userLocation,map,
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#3B82F6',fillOpacity:1,strokeColor:'#fff',strokeWeight:2}
       });
-    }, () => {});
+    },()=>{});
   }
 
-  // Hide loading screen
-  document.getElementById('loading').style.display = 'none';
-  mapsReady = true;
+  document.getElementById('loading').style.display='none';
 }
 </script>
 
